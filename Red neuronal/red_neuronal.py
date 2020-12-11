@@ -39,6 +39,7 @@ class RedNeuronal:
                 neurona += 1
             capa += 1
 
+
     def calculo_error_ultima_capa(self, salidas_esperadas):
         neurona = 0
         while neurona < len(self.red_errores[-1]):
@@ -53,6 +54,9 @@ class RedNeuronal:
     def dp_conexion_salida(self, capa, neurona, neurona_conectada):
         return self.red_conexiones[capa][neurona][neurona_conectada]
 
+    def dp_conexion_peso(self, capa, neurona):
+        return self.red_salidas[capa - 1][neurona]
+
 
     def calculo_error_capa(self, capa):
         neurona = 0
@@ -64,8 +68,25 @@ class RedNeuronal:
                         * self.dp_conexion_salida(capa + 1, neurona_conectada, neurona) * \
                         self.red_errores[capa + 1][neurona_conectada]
                 neurona_conectada += 1
-            print()
             neurona += 1
+
+
+    def cambio_valores_conexion(self, capa):
+        taza_aprendisaje = 0.5
+        neurona = 0
+        while neurona < len(self.red_conexiones[capa]):
+            neurona_conectada = 0
+            while neurona_conectada < len(self.red_conexiones[capa][neurona]):
+                gradiente = self.red_errores[capa][neurona] * \
+                        self.dp_salida_conexion(capa, neurona) * \
+                        self.dp_conexion_peso(capa, neurona_conectada)
+                self.red_conexiones[capa][neurona][neurona_conectada] = \
+                        self.red_conexiones[capa][neurona][neurona_conectada] - taza_aprendisaje * \
+                        gradiente 
+                neurona_conectada += 1
+            neurona += 1
+            
+
 
     def entrenamiento(self, salidas_esperadas):
         self.prediccion()
@@ -74,7 +95,10 @@ class RedNeuronal:
         while capa >= 0:
             self.calculo_error_capa(capa)
             capa -= 1
-        print(self.red_errores)
+        capa = len(self.red_errores) - 1
+        while capa > 0:
+            self.cambio_valores_conexion(capa)
+            capa -= 1
 
         
 def funcion_activacion(x):
@@ -84,4 +108,7 @@ def funcion_activacion(x):
 if __name__ == "__main__":
     red = RedNeuronal([0.05, 0.1], [2, 2, 2], [[0.35, 0.35], [0.6, 0.6]], 
             [[[0.15, 0.2], [0.25, 0.3]], [[0.40, 0.45], [0.50, 0.55]]])
-    red.entrenamiento([0.01, 0.99])
+    for i in range(10000):
+        red.entrenamiento([0.01, 0.99])
+    print(red.red_conexiones)
+    print(red.red_salidas[-1])
